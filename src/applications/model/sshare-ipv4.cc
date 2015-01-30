@@ -212,6 +212,11 @@ SShareIpv4::SetPacketSendingCallback(Callback <void, uint32_t> packetSendingFn)
 }
 
 void
+SShareIpv4::SetProcessingCallback(Callback <void> processingFn){
+	m_processingFn = processingFn;
+}
+
+void
 SShareIpv4::NotifySeqRetrieveSuccess (uint8_t* key, uint8_t keyBytes, uint8_t* object, uint32_t objectBytes)
 {
 	m_seqretrieveSuccessFn (key, keyBytes, object, objectBytes);
@@ -233,6 +238,11 @@ void
 SShareIpv4::NotifyPacketSending(uint32_t packetsize)
 {
 	m_packetSendingFn (packetsize);
+}
+
+void
+SShareIpv4::NotifyProcessing(){
+	m_processingFn();
 }
 
 void
@@ -311,34 +321,34 @@ SShareIpv4::ProcesssShareMessage (Ptr<Packet> packet, Ptr<SShareConnection> sSha
 	NS_LOG_INFO (sShareMessage);
 	switch (sShareMessage.GetMessageType ())
 	{
-	case SShareMessage::QUERY_REQ:
-		ProcessQueryReq (sShareMessage, sShareConnection);
-		break;
-	case SShareMessage::QUERY_RSP:
-		ProcessQueryRsp (sShareMessage, sShareConnection);
-		break;
-	case SShareMessage::COOPERATE_REQ:
-		ProcessCooperateReq (sShareMessage, sShareConnection);
-		break;
-	case SShareMessage::COOPERATE_TRA:
-		ProcessCooperateTra (sShareMessage, sShareConnection);
-		break;
-	case SShareMessage::COOPERATE_RSP:
-		ProcessCooperateRsp (sShareMessage, sShareConnection);
-		break;
-	case SShareMessage::SUBQUERY_REQ:
-		ProcessSubqueryReq (sShareMessage, sShareConnection);
-		break;
-	case SShareMessage::SUBQUERY_RSP:
-		ProcessSubqueryRsp (sShareMessage, sShareConnection);
-		break;
-	case SShareMessage::MESSAGE_RSP:
-		ProcessMessageRsp (sShareMessage, sShareConnection);
-		break;
-	default:
-		break;
-
-  }
+		case SShareMessage::QUERY_REQ:
+			ProcessQueryReq (sShareMessage, sShareConnection);
+			break;
+		case SShareMessage::QUERY_RSP:
+			ProcessQueryRsp (sShareMessage, sShareConnection);
+			break;
+		case SShareMessage::COOPERATE_REQ:
+			ProcessCooperateReq (sShareMessage, sShareConnection);
+			break;
+		case SShareMessage::COOPERATE_TRA:
+			ProcessCooperateTra (sShareMessage, sShareConnection);
+			break;
+		case SShareMessage::COOPERATE_RSP:
+			ProcessCooperateRsp (sShareMessage, sShareConnection);
+			break;
+		case SShareMessage::SUBQUERY_REQ:
+			ProcessSubqueryReq (sShareMessage, sShareConnection);
+			break;
+		case SShareMessage::SUBQUERY_RSP:
+			ProcessSubqueryRsp (sShareMessage, sShareConnection);
+			break;
+		case SShareMessage::MESSAGE_RSP:
+			ProcessMessageRsp (sShareMessage, sShareConnection);
+			break;
+		default:
+			break;
+	}
+	NotifyProcessing();
 }
 
 void

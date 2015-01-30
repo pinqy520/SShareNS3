@@ -164,6 +164,7 @@ private:
 	Callback <void, uint8_t*, uint8_t> m_seqretrieveFailureFn;
 	Callback <void, std::string> m_goOnProcessingSparqlFn;
 	Callback <void, uint32_t> m_packetSendingFn;
+	Callback <void> m_processingFn;
 
 
 public:
@@ -183,12 +184,14 @@ public:
 	void SetGoOnProcessingSparqlCallback (Callback <void, std::string>);
 
 	void SetPacketSendingCallback(Callback <void, uint32_t>);
+	void SetProcessingCallback(Callback <void>);
 
 
 	void NotifySeqRetrieveSuccess (uint8_t* key, uint8_t keyBytes, uint8_t* object, uint32_t objectBytes);
 	void NotifySeqRetrieveFailure (uint8_t* key, uint8_t keyBytes);
 	void NotifyGoOnProcessingSparql (std::string sparqlString);
 	void NotifyPacketSending(uint32_t packetsize);
+	void NotifyProcessing();
 
 	//TCP callbacks
 	bool HandleConnectionRequest (Ptr<Socket> socket, const Address& address);

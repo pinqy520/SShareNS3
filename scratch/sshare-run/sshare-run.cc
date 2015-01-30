@@ -76,6 +76,7 @@ public:
 			   ,uint8_t* oldPredecessorKey, uint8_t oldPredecessorKeyBytes, Ipv4Address predecessorIp, uint16_t predecessorPort);
     void GoOnProcessingSparql(std::string sparql);
     void PacketSendingRecord(uint32_t packetSize);
+    void ProcessingCheck();
 
 
     //Statistics
@@ -668,6 +669,13 @@ SShareEx::PacketSendingRecord(uint32_t packetSize)
 	}
 
 }
+void
+SShareEx::ProcessingCheck(){
+	uint64_t nowTime = Simulator::Now ().GetMilliSeconds();
+	//std::cout << "\nCurrent Simulation Time: " << nowTime << std::endl;
+	NS_LOG_FUNCTION_NOARGS();
+	m_stat_end_time = nowTime;
+}
 
 void
 SShareEx::DrawGraph()
@@ -908,6 +916,7 @@ int main(int argc, char *argv[])
 		sshareApplication->SetGoOnProcessingSparqlCallback(MakeCallback(&SShareEx::GoOnProcessingSparql, &sshareEx));
 
 		sshareApplication->SetPacketSendingCallback(MakeCallback(&SShareEx::PacketSendingRecord, &sshareEx));
+		sshareApplication->SetProcessingCallback(MakeCallback(&SShareEx::ProcessingCheck, &sshareEx));
 
 		sshareApplication->SetChordApplication(chordApplication);
 
@@ -920,6 +929,7 @@ int main(int argc, char *argv[])
 		sshareApps.Start(Seconds (0.0));
 		Ptr<SShareIpv4> sshareApplication = nodes.Get(k)->GetApplication(0)->GetObject<SShareIpv4> ();
 		sshareApplication->SetPacketSendingCallback(MakeCallback(&SShareEx::PacketSendingRecord, &sshareEx));
+		sshareApplication->SetProcessingCallback(MakeCallback(&SShareEx::ProcessingCheck, &sshareEx));
 		std::cout << sshareApplication->GetLocalIp() << std::endl;
 	}
 
