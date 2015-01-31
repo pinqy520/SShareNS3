@@ -465,59 +465,59 @@ ChordIpv4::Retrieve (uint8_t *key, uint8_t sizeOfKey)
 void
 ChordIpv4::InsertVNode (std::string vNodeName, uint8_t* key, uint8_t keyBytes)
 {
-  NS_LOG_FUNCTION_NOARGS ();
-  NS_LOG_INFO ("Creating Chord Virtual Node at NS3 physical node: " << GetNode ()->GetId());
-  Ptr<ChordIdentifier> chordIdentifier = Create<ChordIdentifier> (key, keyBytes);
-  //Create VNode object
-  Ptr<ChordNode> node = Create<ChordNode> (chordIdentifier, vNodeName, m_localIpAddress, m_listeningPort, m_applicationPort, m_dHashPort);
-  Ptr<ChordVNode> vNode = Create<ChordVNode> (node, m_maxVNodeSuccessorListSize, m_maxVNodePredecessorListSize);
-  //Own up entire key-space
-  vNode-> SetSuccessor (Create<ChordNode> (vNode));
-  vNode-> SetPredecessor (Create<ChordNode> (vNode));
-  //Set routable = false
-  vNode->SetRoutable(false);
+	NS_LOG_FUNCTION_NOARGS ();
+	NS_LOG_INFO ("Creating Chord Virtual Node at NS3 physical node: " << GetNode ()->GetId());
+	Ptr<ChordIdentifier> chordIdentifier = Create<ChordIdentifier> (key, keyBytes);
+	//Create VNode object
+	Ptr<ChordNode> node = Create<ChordNode> (chordIdentifier, vNodeName, m_localIpAddress, m_listeningPort, m_applicationPort, m_dHashPort);
+	Ptr<ChordVNode> vNode = Create<ChordVNode> (node, m_maxVNodeSuccessorListSize, m_maxVNodePredecessorListSize);
+	//Own up entire key-space
+	vNode-> SetSuccessor (Create<ChordNode> (vNode));
+	vNode-> SetPredecessor (Create<ChordNode> (vNode));
+	//Set routable = false
+	vNode->SetRoutable(false);
 
-  /* bootStrapIp is same as local Ip and no v-nodes exist. In that case we need to create a new chord */
-  if (isBootStrapNode && m_vNodeMap.GetSize() == 0)
-  {
-    //Create a new chord network
-    //Insert VNode into list
-    Ptr<ChordNode> chordNode = DynamicCast<ChordNode>(vNode);
-    m_vNodeMap.UpdateNode (chordNode);
-    DoFixFinger (vNode);
-    NotifyJoinSuccess(vNode->GetVNodeName(), vNode->GetChordIdentifier());
-    return;
-  }
+	/* bootStrapIp is same as local Ip and no v-nodes exist. In that case we need to create a new chord */
+	if (isBootStrapNode && m_vNodeMap.GetSize() == 0)
+	{
+		//Create a new chord network
+		//Insert VNode into list
+		Ptr<ChordNode> chordNode = DynamicCast<ChordNode>(vNode);
+		m_vNodeMap.UpdateNode (chordNode);
+		DoFixFinger (vNode);
+		NotifyJoinSuccess(vNode->GetVNodeName(), vNode->GetChordIdentifier());
+		return;
+	}
 
-  //Insert VNode into list
-  Ptr<ChordNode> chordNode = DynamicCast<ChordNode>(vNode); 
-  m_vNodeMap.UpdateNode (chordNode);
-  //Send this request to bootstrap IP
-  Ptr<Packet> packet = Create<Packet> ();
-  ChordMessage chordMessage = ChordMessage ();
-  vNode->PackJoinReq (chordMessage);
-  //Add transaction
-  Ptr<ChordTransaction> chordTransaction = Create<ChordTransaction> (chordMessage.GetTransactionId(), chordMessage, m_requestTimeout, m_maxRequestRetries);
-  //Add to vNode
-  vNode -> AddTransaction (chordMessage.GetTransactionId(), chordTransaction);
+	//Insert VNode into list
+	Ptr<ChordNode> chordNode = DynamicCast<ChordNode>(vNode);
+	m_vNodeMap.UpdateNode (chordNode);
+	//Send this request to bootstrap IP
+	Ptr<Packet> packet = Create<Packet> ();
+	ChordMessage chordMessage = ChordMessage ();
+	vNode->PackJoinReq (chordMessage);
+	//Add transaction
+	Ptr<ChordTransaction> chordTransaction = Create<ChordTransaction> (chordMessage.GetTransactionId(), chordMessage, m_requestTimeout, m_maxRequestRetries);
+	//Add to vNode
+	vNode -> AddTransaction (chordMessage.GetTransactionId(), chordTransaction);
 
-  //Start transaction timer
-  EventId requestTimeoutId = Simulator::Schedule (chordTransaction->GetRequestTimeout(), &ChordIpv4::HandleRequestTimeout, this, vNode, chordMessage.GetTransactionId());
-  chordTransaction -> SetRequestTimeoutEventId (requestTimeoutId);
-  packet->AddHeader (chordMessage);
-  if (packet->GetSize())
-  {
-    NS_LOG_INFO ("Sending JoinReq\n" << chordMessage);
-    if (m_vNodeMap.GetSize() > 1)
-    {
-      if (RoutePacket (vNode->GetChordIdentifier(), packet) == true)
-      {
-        return;
-      }
-    }
-    //Default:: Send to bootstrap node
-    SendPacket (packet, m_bootStrapIp, m_bootStrapPort);
-  }
+	//Start transaction timer
+	EventId requestTimeoutId = Simulator::Schedule (chordTransaction->GetRequestTimeout(), &ChordIpv4::HandleRequestTimeout, this, vNode, chordMessage.GetTransactionId());
+	chordTransaction -> SetRequestTimeoutEventId (requestTimeoutId);
+	packet->AddHeader (chordMessage);
+	if (packet->GetSize())
+	{
+		NS_LOG_INFO ("Sending JoinReq\n" << chordMessage);
+		if (m_vNodeMap.GetSize() > 1)
+		{
+			if (RoutePacket (vNode->GetChordIdentifier(), packet) == true)
+			{
+				return;
+			}
+		}
+		//Default:: Send to bootstrap node
+		SendPacket (packet, m_bootStrapIp, m_bootStrapPort);
+	}
 }
 
 void
@@ -683,37 +683,37 @@ ChordIpv4::ProcessUdpPacket (Ptr<Socket> socket)
 void
 ChordIpv4::ProcessJoinReq (ChordMessage chordMessage)
 {
-  NS_LOG_FUNCTION_NOARGS ();
-  Ptr<ChordNode> requestorNode = chordMessage.GetRequestorNode();
-  uint32_t transactionId = chordMessage.GetTransactionId ();
-  if (m_vNodeMap.GetSize() == 0)
-  {
-    //No vNode exists as yet, drop this request.
-    return;
-  }
-  Ptr<Packet> packet = Create<Packet> ();
-  //Check if we can be this node's successor
-  Ptr<ChordVNode> virtualNode;
-  bool ret = LookupLocal (requestorNode->GetChordIdentifier(), virtualNode);
-  if (ret == true)
-  {
-    ChordMessage chordMessageRsp = ChordMessage ();
-    virtualNode->PackJoinRsp (requestorNode, transactionId, chordMessageRsp);
-    packet-> AddHeader (chordMessageRsp);
-    //Send packet
-    if (packet->GetSize())
-    {
-      NS_LOG_INFO("Sending JoinRsp: "<<chordMessageRsp);
-      SendPacket(packet, requestorNode->GetIpAddress(), requestorNode->GetPort());
-    }
-    return;
-  }
-  //Could not resolve join request, forward to nearest successor
-  packet->AddHeader(chordMessage);
-  if (packet->GetSize())
-  {
-    RoutePacket (requestorNode->GetChordIdentifier(), packet);
-  }
+	NS_LOG_FUNCTION_NOARGS ();
+	Ptr<ChordNode> requestorNode = chordMessage.GetRequestorNode();
+	uint32_t transactionId = chordMessage.GetTransactionId ();
+	if (m_vNodeMap.GetSize() == 0)
+	{
+		//No vNode exists as yet, drop this request.
+		return;
+	}
+	Ptr<Packet> packet = Create<Packet> ();
+	//Check if we can be this node's successor
+	Ptr<ChordVNode> virtualNode;
+	bool ret = LookupLocal (requestorNode->GetChordIdentifier(), virtualNode);
+	if (ret == true)
+	{
+		ChordMessage chordMessageRsp = ChordMessage ();
+		virtualNode->PackJoinRsp (requestorNode, transactionId, chordMessageRsp);
+		packet-> AddHeader (chordMessageRsp);
+		//Send packet
+		if (packet->GetSize())
+		{
+			NS_LOG_INFO("Sending JoinRsp: "<<chordMessageRsp);
+			SendPacket(packet, requestorNode->GetIpAddress(), requestorNode->GetPort());
+		}
+		return;
+	}
+	//Could not resolve join request, forward to nearest successor
+	packet->AddHeader(chordMessage);
+	if (packet->GetSize())
+	{
+		RoutePacket (requestorNode->GetChordIdentifier(), packet);
+	}
 }
 
 void
@@ -1075,51 +1075,51 @@ ChordIpv4::ProcessFingerRsp (ChordMessage chordMessage)
 void
 ChordIpv4::HandleRequestTimeout (Ptr<ChordVNode> vNode, uint32_t transactionId)
 {
-  NS_LOG_FUNCTION_NOARGS ();
-  //Find transaction
-  Ptr<ChordTransaction> chordTransaction;
-  if (vNode -> FindTransaction (transactionId, chordTransaction) == false)
-  {
-    //Transaction does not exist
-    return;
-  }
-  //Retransmit and reschedule if needed
-  if (chordTransaction->GetRetries() > chordTransaction->GetMaxRetries())
-  {
-    //Report failure
-    if (chordTransaction->GetChordMessage().GetMessageType() == ChordMessage::JOIN_REQ)
-    {
-      NS_LOG_ERROR ("Join request failed!");
-      NotifyVNodeFailure (vNode->GetVNodeName(), vNode->GetChordIdentifier());
-      //Delete vNode
-      DeleteVNode(vNode->GetChordIdentifier());
-    }
-    else if (chordTransaction->GetChordMessage().GetMessageType() == ChordMessage::LOOKUP_REQ)
-    {
-      NS_LOG_ERROR ("Lookup Request failed!");
-      NotifyLookupFailure (chordTransaction->GetChordMessage().GetLookupReq().requestedIdentifier, chordTransaction->GetOriginator());
-      //cancel transaction
-      vNode->RemoveTransaction (chordTransaction->GetTransactionId());
-    }
-    return;
-  }
-  else
-  {
-    //Retransmit
-    uint8_t retries = chordTransaction->GetRetries();
-    chordTransaction->SetRetries (retries+1);
-    Ptr<Packet> packet = Create<Packet> ();
-    packet->AddHeader (chordTransaction->GetChordMessage());
-    if (packet->GetSize())
-    {
-      NS_LOG_INFO ("Retransmission Req\n" << chordTransaction->GetChordMessage());
-      SendPacket (packet, m_bootStrapIp, m_bootStrapPort);
-    }
-    //Reschedule
-    //Start transaction timer
-    EventId requestTimeoutId = Simulator::Schedule (chordTransaction->GetRequestTimeout(), &ChordIpv4::HandleRequestTimeout, this, vNode, transactionId);
-    chordTransaction -> SetRequestTimeoutEventId (requestTimeoutId);
-  }
+	NS_LOG_FUNCTION_NOARGS ();
+	//Find transaction
+	Ptr<ChordTransaction> chordTransaction;
+	if (vNode -> FindTransaction (transactionId, chordTransaction) == false)
+	{
+		//Transaction does not exist
+		return;
+	}
+	//Retransmit and reschedule if needed
+	if (chordTransaction->GetRetries() > chordTransaction->GetMaxRetries())
+	{
+		//Report failure
+		if (chordTransaction->GetChordMessage().GetMessageType() == ChordMessage::JOIN_REQ)
+		{
+			NS_LOG_ERROR ("Join request failed!");
+			NotifyVNodeFailure (vNode->GetVNodeName(), vNode->GetChordIdentifier());
+			//Delete vNode
+			DeleteVNode(vNode->GetChordIdentifier());
+		}
+		else if (chordTransaction->GetChordMessage().GetMessageType() == ChordMessage::LOOKUP_REQ)
+		{
+			NS_LOG_ERROR ("Lookup Request failed!");
+			NotifyLookupFailure (chordTransaction->GetChordMessage().GetLookupReq().requestedIdentifier, chordTransaction->GetOriginator());
+			//cancel transaction
+			vNode->RemoveTransaction (chordTransaction->GetTransactionId());
+		}
+		return;
+	}
+	else
+	{
+		//Retransmit
+		uint8_t retries = chordTransaction->GetRetries();
+		chordTransaction->SetRetries (retries+1);
+		Ptr<Packet> packet = Create<Packet> ();
+		packet->AddHeader (chordTransaction->GetChordMessage());
+		if (packet->GetSize())
+		{
+			NS_LOG_INFO ("Retransmission Req\n" << chordTransaction->GetChordMessage());
+			SendPacket (packet, m_bootStrapIp, m_bootStrapPort);
+		}
+		//Reschedule
+		//Start transaction timer
+		EventId requestTimeoutId = Simulator::Schedule (chordTransaction->GetRequestTimeout(), &ChordIpv4::HandleRequestTimeout, this, vNode, transactionId);
+		chordTransaction -> SetRequestTimeoutEventId (requestTimeoutId);
+	}
 }
 
 

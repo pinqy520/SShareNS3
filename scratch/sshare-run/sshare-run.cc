@@ -819,7 +819,29 @@ int main(int argc, char *argv[])
 	std::string locationTablePath = "/home/huangqi/ex/export/";
 	std::string dataRecordPath = "/home/huangqi/ex/export/";
 	std::string sparqlPath = "/home/huangqi/ex/sparql.query";
-
+	std::cout << "processing information path: " << std::endl;
+	std::cout << "default(/home/huangqi/ex/export/)" << std::endl;
+	std::string pit_path = "";
+	std::cin >> pit_path;
+	if(pit_path != ""){
+		locationTablePath = pit_path;
+		dataRecordPath = pit_path;
+	}
+	std::cout << "set:" << locationTablePath << std::endl;
+	std::cout << "---------------------------" << std::endl;
+	std::cout << "query file path: " << std::endl;
+	std::cout << "default(/home/huangqi/ex/sparql.query)" << std::endl;
+	std::string q_path = "";
+	std::cin >> q_path;
+	if(q_path != ""){
+		sparqlPath = q_path;
+	}
+	std::cout << "set:" << q_path << std::endl;
+	std::cout << "---------------------------" << std::endl;
+	std::string chord_running_information = "n";
+	std::cout << "show chord running information?(y/n):" << std::endl;
+	std::cin >> chord_running_information;
+	std::cout << "---------------------------" << std::endl;
 	//
 	// Allow the user to override any of the defaults and the above Bind() at
 	// run-time, via command-line arguments
@@ -840,7 +862,11 @@ int main(int argc, char *argv[])
 	std::cout << "Number of storage nodes to simulate: " << (uint16_t) storageNodeNum << "\n";
 
 	LogComponentEnable("SShareEx", LOG_LEVEL_ALL);
-	LogComponentEnable("ChordIpv4Application", LOG_LEVEL_ERROR);
+	if(chord_running_information == "y"){
+		LogComponentEnable("ChordIpv4Application", LOG_LEVEL_ALL);
+	}else{
+		LogComponentEnable("ChordIpv4Application", LOG_LEVEL_ERROR);
+	}
 	LogComponentEnable("ChordIdentifier", LOG_LEVEL_ERROR);
 	LogComponentEnable("ChordTransaction", LOG_LEVEL_ERROR);
 	LogComponentEnable("ChordVNode", LOG_LEVEL_ERROR);
