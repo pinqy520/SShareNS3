@@ -490,7 +490,7 @@ SShareEx::ImportSimulationData(std::string locationTablePath, std::string dataRe
 			std::getline (sparqlFile, tempstring, '\n');
 			fileString += tempstring + "\n";
 		}
-		Tokenize(fileString, sparqls, "----------");
+		Tokenize(fileString, sparqls, "==========");
 		std::cout << "\n\n" << fileString << "\n\n";
 		sparqlFile.close();
 	}

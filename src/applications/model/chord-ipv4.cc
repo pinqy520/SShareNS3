@@ -1158,29 +1158,29 @@ ChordIpv4::DeleteVNode (std::string vNodeName)
 bool
 ChordIpv4::LookupLocal (Ptr<ChordIdentifier> chordIdentifier, Ptr<ChordVNode>& virtualNode)
 {
-  NS_LOG_FUNCTION_NOARGS ();
-  //Iterate VNode list and check if we are owner
-  for(ChordNodeMap::iterator vNodeIter = m_vNodeMap.GetMap().begin(); vNodeIter != m_vNodeMap.GetMap().end(); vNodeIter++)
-  {
-    Ptr<ChordVNode> vNode = DynamicCast<ChordVNode>((*vNodeIter).second);
-    if (vNode->GetPredecessor() == 0)
-      continue;
-    if (chordIdentifier->IsInBetween(vNode->GetPredecessor()->GetChordIdentifier (), vNode->GetChordIdentifier () ))
-    {
-      //Do not accept ownership if we have set ourselves as predecessor, but accept in bootstrap case. This means our predecessor recently died and we are waiting for someone to send us stabilize. 
-      if (vNode->GetPredecessor()->GetChordIdentifier()->IsEqual(vNode->GetChordIdentifier()) && !vNode->GetPredecessor()->GetChordIdentifier()->IsEqual(vNode->GetSuccessor()->GetChordIdentifier()))
-      {
-        return false;
-      }
+	NS_LOG_FUNCTION_NOARGS ();
+	//Iterate VNode list and check if we are owner
+	for(ChordNodeMap::iterator vNodeIter = m_vNodeMap.GetMap().begin(); vNodeIter != m_vNodeMap.GetMap().end(); vNodeIter++)
+	{
+		Ptr<ChordVNode> vNode = DynamicCast<ChordVNode>((*vNodeIter).second);
+		if (vNode->GetPredecessor() == 0)
+			continue;
+		if (chordIdentifier->IsInBetween(vNode->GetPredecessor()->GetChordIdentifier (), vNode->GetChordIdentifier () ))
+		{
+			//Do not accept ownership if we have set ourselves as predecessor, but accept in bootstrap case. This means our predecessor recently died and we are waiting for someone to send us stabilize.
+			if (vNode->GetPredecessor()->GetChordIdentifier()->IsEqual(vNode->GetChordIdentifier()) && !vNode->GetPredecessor()->GetChordIdentifier()->IsEqual(vNode->GetSuccessor()->GetChordIdentifier()))
+			{
+				return false;
+			}
 
-      //We are the owner. Set virtualNode pointer and return success
-      virtualNode = DynamicCast<ChordVNode>((*vNodeIter).second);
-      return true;
-    }
-  }
-  NS_LOG_INFO ("NOT OWNER, localIpAddress: "<<m_localIpAddress<<" listeningPort"<<m_listeningPort);
-  //We are not owner, return failure
-  return false;
+			//We are the owner. Set virtualNode pointer and return success
+			virtualNode = DynamicCast<ChordVNode>((*vNodeIter).second);
+			return true;
+		}
+	}
+	NS_LOG_INFO ("NOT OWNER, localIpAddress: "<<m_localIpAddress<<" listeningPort"<<m_listeningPort);
+	//We are not owner, return failure
+	return false;
 }
 
 bool
@@ -1243,21 +1243,21 @@ ChordIpv4::SendViaAnyVNode (Ptr<Packet> packet)
 bool
 ChordIpv4::RoutePacket (Ptr<ChordIdentifier> targetIdentifier, Ptr<Packet> packet)
 {
-  if (packet->GetSize())
-  {
-    Ptr<ChordVNode> vNode;
-    //Choose best vNode
-    if (FindNearestVNode (targetIdentifier, vNode) == true)
-    {
-      if (RouteViaFinger (targetIdentifier, vNode, packet) == true)
-        return true;
-    }
-    else
-    {
-      return SendViaAnyVNode (packet);
-    }
-  }
-  return false;
+	if (packet->GetSize())
+	{
+		Ptr<ChordVNode> vNode;
+		//Choose best vNode
+		if (FindNearestVNode (targetIdentifier, vNode) == true)
+		{
+			if (RouteViaFinger (targetIdentifier, vNode, packet) == true)
+				return true;
+		}
+		else
+		{
+			return SendViaAnyVNode (packet);
+		}
+	}
+	return false;
 }
 
 bool
